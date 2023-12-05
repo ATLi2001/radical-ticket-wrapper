@@ -148,7 +148,7 @@ async function orchestrate(request) {
 }
 
 async function target_rw_set(args) {
-	let { ticket_id, res_email, res_name, res_card } = args;
+	let { ticket_id, taken, res_email, res_name, res_card } = args;
 
 	let rw_set = await get_rw_set(ticket_id, res_email, res_name, res_card);
 
@@ -158,7 +158,7 @@ async function target_rw_set(args) {
 }
 
 async function target_function(args) {
-	let { ticket_id, res_email, res_name, res_card } = args;
+	let { ticket_id, taken, res_email, res_name, res_card } = args;
 
 	let b = await reserve_ticket(ticket_id, res_email, res_name, res_card);
 

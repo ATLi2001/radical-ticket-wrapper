@@ -2,9 +2,9 @@ name = "radical-ticket-wrapper"
 main = "src/index.js"
 compatibility_date = "2023-11-21"
 compatibility_flags = [ "nodejs_compat" ]
-#routes = [
-	#{ pattern = "crypto-orch.sns-radical.com", custom_domain = true }
-#]
+routes = [
+	{ pattern = "ticket-bench-orch.radical-serverless.com", custom_domain = true }
+]
 # Variable bindings. These are arbitrary, plaintext strings (similar to environment variables)
 # Note: Use secrets to store sensitive data.
 # Docs: https://developers.cloudflare.com/workers/platform/environment-variables
