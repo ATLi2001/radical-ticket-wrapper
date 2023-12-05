@@ -8,9 +8,9 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
-import init, { reserve_ticket, populate_tickets, get_rw_set, get_ticket, clear_cache } from './rust_radical_ticket/pkg/worker_rust';
+import { reserve_ticket, populate_tickets, get_rw_set, get_ticket, clear_cache } from './rust_radical_ticket/pkg/worker_rust';
 
-const cache = caches.default;
+const cache = await caches.open('RADICAL_SSR');
 let env = {};
 let logger = console.log;
 
@@ -171,8 +171,8 @@ export default {
 			logger = function () {};
 		}
 		logger('Starting function!');
-		await init();
 		env = environment;
+		await populate_tickets(5);
 		let orchStart = performance.now();
 		let orchResult = await orchestrate(request);
 		let orchEnd = performance.now();
