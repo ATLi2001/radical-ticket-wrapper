@@ -1,0 +1,10 @@
+{
+	"remoteUrl": "http://localhost:7071/api/consistencytrigger",
+	"backup": "http://127.0.0.1:7071/api/CryptoRemote",
+	"args": {
+		"ticket_id": 0,
+		"res_email": "test@test.com",
+		"res_name": "Test Name",
+		"res_card": "xxxx1234"
+	}
+}
