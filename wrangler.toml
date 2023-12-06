@@ -13,7 +13,7 @@ routes = [
 COLD_MISS_PROB=0
 # The probability that a hit should be treated as a miss because the item was evicted from the cache
 CAP_MISS_PROB=0
-DO_CONSISTENCY_CHECK=false
+DO_CONSISTENCY_CHECK=true
 DEBUGPRINT=true
 # Bind a KV Namespace. Use KV as persistent storage for small key-value pairs.
 # Docs: https://developers.cloudflare.com/workers/runtime-apis/kv

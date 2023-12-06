@@ -167,16 +167,26 @@ async function target_function(args) {
 
 export default {
 	async fetch(request, environment, ctx) {
-		if (!environment.DEBUGPRINT) {
-			logger = function () {};
+		const url = new URL(request.url);
+
+		if (url.pathname === '/populate_tickets') {
+			let n = await request.text();
+			await populate_tickets(parseInt(n));
+			return new Response('Success');
+		} else if (url.pathname === '/clear_cache') {
+			await clear_cache();
+			return new Response('Success');
+		} else {
+			if (!environment.DEBUGPRINT) {
+				logger = function () {};
+			}
+			logger('Starting function!');
+			env = environment;
+			let orchStart = performance.now();
+			let orchResult = await orchestrate(request);
+			let orchEnd = performance.now();
+			logger('Got orchestrator result in', orchEnd - orchStart);
+			return orchResult;
 		}
-		logger('Starting function!');
-		env = environment;
-		await populate_tickets(5);
-		let orchStart = performance.now();
-		let orchResult = await orchestrate(request);
-		let orchEnd = performance.now();
-		logger('Got orchestrator result in', orchEnd - orchStart);
-		return orchResult;
 	},
 };
