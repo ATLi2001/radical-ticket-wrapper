@@ -76,25 +76,25 @@ class TicketBenchmark:
 if __name__ == "__main__":
   # Parse in command-line arguments.
   parser = argparse.ArgumentParser(
-      prog="ticket-benchmark",
-      description="Creates tickets and measures latency of reserving a ticket",
+    prog="ticket-benchmark",
+    description="Creates tickets and measures latency of reserving a ticket",
   )
   parser.add_argument("-d", "--dev", action="store_true", help="use the local dev server rather than the Cloudflare deployment")
   args = parser.parse_args()
 
   # Set target depending on dev vs. prod.
   if args.dev:
-      target = "http://localhost:8787"
-      env_name = "local"
+    target = "http://localhost:8787"
+    env_name = "local"
   else:
-      target = "https://ticket-bench-orch.sns-radical.com"
-      env_name = "edge"
+    target = "https://ticket-bench-orch.radical-serverless.com"
+    env_name = "edge"
 
   n = 10
-  trials = 2
+  trials = 10
 
   consistency_check_url = "https://nuamf2bgzlrfj6vubqfzkjv52m0kpefu.lambda-url.us-east-2.on.aws/"
-  lambda_url = "https://67f42q3sp4gqm7rfgvjngamyra0wrsew.lambda-url.us-east-2.on.aws/"
+  lambda_url = "https://c54mpf4fcxguxzvatjfjocaabu0kgsuz.lambda-url.us-east-2.on.aws/"
 
   results = pd.DataFrame(columns=[f"ticket{i}_ms" for i in range(n)])
 

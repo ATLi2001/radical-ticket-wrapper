@@ -37,7 +37,7 @@ class LambdaBaseline:
 
 
 if __name__ == "__main__":
-  target = "https://67f42q3sp4gqm7rfgvjngamyra0wrsew.lambda-url.us-east-2.on.aws"
+  target = "https://c54mpf4fcxguxzvatjfjocaabu0kgsuz.lambda-url.us-east-2.on.aws/"
 
   n = 10
   trials = 10
