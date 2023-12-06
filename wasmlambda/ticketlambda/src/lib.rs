@@ -86,7 +86,11 @@ pub fn anti_fraud(res_email: Option<String>, res_name: Option<String>, res_card:
         feature_vec = relu(feature_vec);
     }
 
-    true
+    feature_norm = 0.0;
+    for i in 0..feature_vec.len() {
+        feature_norm += feature_vec[i].powi(2);
+    }
+    feature_norm > 0.0
 }
 
 #[wasm_bindgen]
