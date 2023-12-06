@@ -1,6 +1,7 @@
 import { greet, anti_fraud } from './pkg/ticketlambda.js';
 import { DynamoDB } from "@aws-sdk/client-dynamodb"
 import { DynamoDBDocumentClient, GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb"
+import { performance, PerformanceObserver } from "perf_hooks"
 
 const getKey = async (docClient, key) => {
   const command = new GetCommand({
@@ -30,9 +31,23 @@ export const handler = async(event, ctx) => {
   const client = new DynamoDB({ region: "us-east-2" });
   const docClient = DynamoDBDocumentClient.from(client)
 
-	console.log("Fetching ticket with key", ticketKey)
-	let item = await getKey(docClient, ticketKey)
-	console.log("Got item", item)
+	// console.log("Fetching ticket with key", ticketKey)
+	// let item = await getKey(docClient, ticketKey)
+	// console.log("Got item", item)
+	// console.log(item)
+
+	let item = {
+		Version: 19,
+		ID: 'ticket-0',
+		Value: {
+			id: 0,
+			res_name: 'Test Name0',
+			res_email: 'test_0@test.com',
+			res_card: '0xxxx1234',
+			taken: true
+		},
+		Key: 'ticket-0'
+	}
 
 	// Do the anti fraud stuff
 	let antiFraudCheck = true
@@ -52,8 +67,8 @@ export const handler = async(event, ctx) => {
 				res_card: res_card
 			}
 		}
-		let resp = await putKey(docClient, ticketKey, new_item);
-		console.log(resp)
+		// let resp = await putKey(docClient, ticketKey, new_item);
+		// console.log(resp)
 	}
 
 	greet("hello")
@@ -64,8 +79,19 @@ export const handler = async(event, ctx) => {
 	}
 }
 
-let result = await handler({
-	body: "{\"id\": 0, \"taken\": true, \"res_email\": \"xx@x.com\", \"res_name\": \"yy\", \"res_card\": \"zz\"}"
-}, undefined)
+const perfObserver = new PerformanceObserver((items) => {
+  items.getEntries().forEach((entry) => {
+    console.log(entry)
+  })
+})
 
-console.log(result)
+perfObserver.observe({ entryTypes: ["measure"], buffer: true })
+
+for (let i = 0; i < 1; i++) {
+	performance.mark("start-req")
+	let result = await handler({
+		body: "{\"id\": 0, \"taken\": true, \"res_email\": \"xx@x.com\", \"res_name\": \"yy\", \"res_card\": \"zz\"}"
+	}, undefined)
+	performance.mark("end-req")
+	performance.measure("request-time", "start-req", "end-req")
+}

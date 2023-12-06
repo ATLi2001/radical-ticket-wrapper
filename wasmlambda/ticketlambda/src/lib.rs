@@ -1,3 +1,4 @@
+use rand::Rng;
 use wasm_bindgen::prelude::*;
 use regex::Regex;
 use rand_distr::{Normal, Distribution};
@@ -6,6 +7,7 @@ use rand_distr::{Normal, Distribution};
 extern "C" {
 		#[wasm_bindgen(js_namespace = console)]
 		fn log(s: &str);
+		fn get_random() -> f32;
 }
 
 macro_rules! console_log {
@@ -21,7 +23,8 @@ fn multiply_random_normal(input_vec: Vec<f32>, output_dim: usize, scale: f32) ->
     let mut normal_matrix = vec![vec![0f32; input_vec.len()]; output_dim];
     for i in 0..normal_matrix.len() {
         for j in 0..normal_matrix[i].len() {
-            normal_matrix[i][j] = normal.sample(&mut rand::thread_rng());
+            normal_matrix[i][j] = rand::thread_rng().gen_range(0.0..scale);
+            // normal_matrix[i][j] = 10.0;
         }
     }
 
