@@ -44,7 +44,7 @@ async function checkCacheVersions(keys) {
 					logger(`Triggering intentional miss on ${key} (${compRandom} vs ${missProb})`);
 					cacheValue = undefined;
 				}
-				version = value['value'].Version;
+				version = value['version'];
 			}
 			if (cacheValue == undefined) {
 				logger(`${key} not present in the storage system (or we triggered an intentional miss)`);
