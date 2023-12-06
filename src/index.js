@@ -8,7 +8,7 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
-import { reserve_ticket, populate_tickets, get_rw_set, get_ticket, clear_cache } from './rust_radical_ticket/pkg/worker_rust';
+import { get_rw_set, anti_fraud } from './rust_radical_ticket/pkg/worker_rust';
 
 const cache = await caches.open('RADICAL_SSR');
 let env = {};
@@ -44,7 +44,7 @@ async function checkCacheVersions(keys) {
 					logger(`Triggering intentional miss on ${key} (${compRandom} vs ${missProb})`);
 					cacheValue = undefined;
 				}
-				version = value['version'];
+				version = value['value'].Version;
 			}
 			if (cacheValue == undefined) {
 				logger(`${key} not present in the storage system (or we triggered an intentional miss)`);
@@ -160,13 +160,91 @@ async function target_rw_set(args) {
 async function target_function(args) {
 	let { id, taken, res_email, res_name, res_card } = args;
 
-	let funcStart = performance.now();
-	let b = await reserve_ticket(id, res_email, res_name, res_card);
-	let funcEnd = performance.now();
+	// get old ticket
+	let key = `ticket-${id}`;
+	let cacheValue = await cache.match(keyToCacheKey(key))
+	// not there 
+	if (cacheValue == undefined) {
+		return false;
+	}
+	// extract info
+	let val_json = await cacheValue.json();
+	let old_val = val_json["value"];
+	let old_version = old_val["Version"];
+	let new_version = old_version + 1;
+	let old_ticket = old_val["Value"];
+	if (old_ticket["taken"]) {
+		return false;
+	}
 
-	logger('function runtime', funcEnd - funcStart);
+	let new_ticket = {
+		"id": id,
+		"taken": true,
+		"res_email": res_email,
+		"res_name": res_name,
+		"res_card": res_card,
+	}
+
+	let funcStart = performance.now();
+	let b = anti_fraud(id, res_email, res_name, res_card);
+	let funcEnd = performance.now();
+	logger('anti fraud runtime', funcEnd - funcStart);
+
+	let new_val = {
+		"Key": key,
+		"ID": key,
+		"Version": new_version,
+		"Value": new_ticket,
+	};
+
+	await updateCache(key, new_val);
 
 	return b;
+}
+
+async function populate_tickets(n) {
+	for (let i = 0; i < n; i++) {
+		let key = `ticket-${i}`;
+		let new_ticket = {
+			"id": i,
+			"taken": false,
+			"res_email": null,
+			"res_name": null,
+			"res_card": null,
+		}
+
+		let new_val = {
+			"Key": key,
+			"ID": key,
+			"Version": 0,
+			"Value": new_ticket,
+		};
+
+		await updateCache(key, new_val);
+	}
+
+	// so we know how much to delet later
+	await updateCache("count", n);
+}
+
+
+async function clear_cache() {
+	let cacheValue = await cache.match(keyToCacheKey("count"));
+	if (cacheValue != undefined) {
+		let val_json = await cacheValue.json();
+		let n = val_json["value"];
+		for (let i = 0; i < n; i++) {
+			await cache.delete(keyToCacheKey(`ticket-${i}`));
+		}
+	}
+}
+
+async function get_ticket(i) {
+	let cacheValue =  await cache.match(keyToCacheKey(`ticket-${i}`));	
+	if (cacheValue != undefined) {
+		return await cacheValue.json();
+	}
+	return undefined;
 }
 
 export default {
@@ -180,7 +258,12 @@ export default {
 		} else if (url.pathname === '/clear_cache') {
 			await clear_cache();
 			return new Response('Success');
-		} else {
+		} else if (url.pathname === '/get_ticket') {
+			let resp = await get_ticket(0);
+			logger(resp);
+			return new Response('ticket 0');
+		} 
+		else {
 			if (!environment.DEBUGPRINT) {
 				logger = function () {};
 			}

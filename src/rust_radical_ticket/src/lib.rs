@@ -1,6 +1,6 @@
-mod cache;
+// mod cache;
 
-use cache::CacheKV;
+// use cache::CacheKV;
 
 use std::vec;
 use worker::*;
@@ -21,70 +21,75 @@ pub struct Ticket {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct MyValue {
+pub struct Item {
+    pub key: String,
+    pub id: String,
     pub version: u32,
     pub value: Ticket,
 }
 
 // type RWSet = Vec<String>;
 
-// create new tickets 
-// expected request body with number
-#[wasm_bindgen]
-pub async fn populate_tickets(n: u32) {
-    let cache = CacheKV::new().await;
+// // create new tickets 
+// // expected request body with number
+// #[wasm_bindgen]
+// pub async fn populate_tickets(n: u32) {
+//     let cache = CacheKV::new().await;
 
-    // create n tickets 
-    for i in 0..n {
-        let ticket = Ticket { 
-            id: i,
-            taken: false,
-            res_email: None,
-            res_name: None,
-            res_card: None,
-        };
-        let val = MyValue {
-            version: 0,
-            value: ticket,
-        };
+//     // create n tickets 
+//     for i in 0..n {
+//         let key = format!("ticket-{i}");
+//         let ticket = Ticket { 
+//             id: i,
+//             taken: false,
+//             res_email: None,
+//             res_name: None,
+//             res_card: None,
+//         };
+//         let val = Item {
+//             key: key.clone(),
+//             id: key.clone(),
+//             version: 0,
+//             value: ticket,
+//         };
 
-        cache.put(&format!("ticket-{i}"), &val).await.unwrap();
-    }
+//         cache.put(&key, &val).await.unwrap();
+//     }
     
-    // save in cache so we can know how much to clear later
+//     // save in cache so we can know how much to clear later
     
-    cache.put("count", &n).await.unwrap();
-}
+//     cache.put("count", &n).await.unwrap();
+// }
 
-// clear the entire cache of tickets
-#[wasm_bindgen]
-pub async fn clear_cache() {
-    let cache = CacheKV::new().await;
-    // get count of how many tickets total
-    let n = cache.get::<u32>("count").await.unwrap().unwrap();
+// // clear the entire cache of tickets
+// #[wasm_bindgen]
+// pub async fn clear_cache() {
+//     let cache = CacheKV::new().await;
+//     // get count of how many tickets total
+//     let n = cache.get::<u32>("count").await.unwrap().unwrap();
 
-    for i in 0..n {
-        cache.delete(&format!("ticket-{i}")).await.unwrap();
-    }
+//     for i in 0..n {
+//         cache.delete(&format!("ticket-{i}")).await.unwrap();
+//     }
 
-    // reset count
-    cache.put("count", &0).await.unwrap();
-}
+//     // reset count
+//     cache.put("count", &0).await.unwrap();
+// }
 
-// return a specific ticket
-#[wasm_bindgen]
-pub async fn get_ticket(ticket_id: u32) -> Option<JsValue> {
+// // return a specific ticket
+// #[wasm_bindgen]
+// pub async fn get_ticket(ticket_id: u32) -> Option<JsValue> {
     
-    let cache = CacheKV::new().await;
-    match cache.get::<MyValue>(&format!("ticket-{ticket_id}")).await.unwrap() {
-        Some(val) => {
-            Some(serde_wasm_bindgen::to_value::<Ticket>(&val.value).unwrap())
-        },
-        None => {
-            None
-        }
-    }
-}
+//     let cache = CacheKV::new().await;
+//     match cache.get::<Item>(&format!("ticket-{ticket_id}")).await.unwrap() {
+//         Some(val) => {
+//             Some(serde_wasm_bindgen::to_value::<Ticket>(&val.value).unwrap())
+//         },
+//         None => {
+//             None
+//         }
+//     }
+// }
 
 // multiply an input vector by a random normal matrix, returning an output vector
 fn multiply_random_normal(input_vec: Vec<f32>, output_dim: usize, scale: f32) -> Vec<f32> {
@@ -122,21 +127,22 @@ fn relu(input_vec: Vec<f32>) -> Vec<f32> {
 
 // check if ticket reservation passes anti fraud test
 // true means reservation is ok, false means not
-fn anti_fraud(ticket: &Ticket) -> bool {
+#[wasm_bindgen]
+pub fn anti_fraud(_ticket_id: u32, res_email: String, res_name: String, res_card: String) -> bool {
     // valid email must have some valid characters before @, some after, a dot, then some more
     const EMAIL_REGEX: &str = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)";
     let re = Regex::new(EMAIL_REGEX).unwrap();
 
-    if !re.is_match(&ticket.res_email.clone().unwrap()) {
+    if !re.is_match(&res_email.clone()) {
         return false;
     }
 
     // check "ml" model
     // create a feature vector from the name, email, and card
     let feature_str = [
-        ticket.res_name.clone().unwrap().as_bytes(), 
-        ticket.res_email.clone().unwrap().as_bytes(), 
-        ticket.res_card.clone().unwrap().as_bytes(),
+        res_name.clone().as_bytes(), 
+        res_email.clone().as_bytes(), 
+        res_card.clone().as_bytes(),
     ].concat();
     // feature vector is normalized
     let mut feature_vec = vec![0f32; feature_str.len()];
@@ -157,49 +163,52 @@ fn anti_fraud(ticket: &Ticket) -> bool {
     true
 }
 
-// reserve a ticket
-// expect request as a json with form of Ticket
-#[wasm_bindgen]
-pub async fn reserve_ticket(ticket_id: u32, res_email: String, res_name: String, res_card: String) -> bool {
-    let cache = CacheKV::new().await;
+// // reserve a ticket
+// // expect request as a json with form of Ticket
+// #[wasm_bindgen]
+// pub async fn reserve_ticket(ticket_id: u32, res_email: String, res_name: String, res_card: String) -> bool {
+//     let cache = CacheKV::new().await;
 
-    // get old val to compute new version number
-    let resp = cache.get::<MyValue>(&format!("ticket-{ticket_id}")).await.unwrap();
-    if resp.is_none() {
-        return false;
-    }
+//     // get old val to compute new version number
+//     let key = format!("ticket-{ticket_id}");
+//     let resp = cache.get::<Item>(&key).await.unwrap();
+//     if resp.is_none() {
+//         return false;
+//     }
     
-    let old_val = resp.unwrap();
-    let new_version = old_val.version + 1;
-    // check that the ticket is not already taken
-    if old_val.value.taken {
-        return false;
-    }
+//     let old_val = resp.unwrap();
+//     let new_version = old_val.version + 1;
+//     // check that the ticket is not already taken
+//     if old_val.value.taken {
+//         return false;
+//     }
     
-    // create new ticket that is taken while checking reservation details are given
-    let new_ticket = Ticket {
-        id: ticket_id,
-        taken: true,
-        res_email: Some(res_email),
-        res_name: Some(res_name),
-        res_card: Some(res_card),
-    };
+//     // create new ticket that is taken while checking reservation details are given
+//     let new_ticket = Ticket {
+//         id: ticket_id,
+//         taken: true,
+//         res_email: Some(res_email),
+//         res_name: Some(res_name),
+//         res_card: Some(res_card),
+//     };
 
-    // call anti fraud detection
-    if !anti_fraud(&new_ticket) {
-        return false;
-    }
+//     // call anti fraud detection
+//     if !anti_fraud(&new_ticket) {
+//         return false;
+//     }
 
-    let new_val = MyValue {
-        version: new_version,
-        value: new_ticket,
-    };
+//     let new_val = Item {
+//         key: key.clone(),
+//         id: key.clone(),
+//         version: new_version,
+//         value: new_ticket,
+//     };
 
-    // put back into cache
-    cache.put(&format!("ticket-{ticket_id}"), &new_val).await.unwrap();
+//     // put back into cache
+//     cache.put(&key, &new_val).await.unwrap();
 
-    true
-}
+//     true
+// }
 
 // extract the read write set from the request
 #[wasm_bindgen]
