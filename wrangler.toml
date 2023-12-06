@@ -1,9 +1,9 @@
 name = "radical-ticket-wrapper"
 main = "src/index.js"
 compatibility_date = "2023-11-21"
-compatibility_flags = [ "nodejs_compat" ]
+# compatibility_flags = [ "nodejs_compat" ]
 routes = [
-	{ pattern = "ticket-bench-orch.radical-serverless.com", custom_domain = true }
+	{ pattern = "ticket-bench-orch.sns-radical.com", custom_domain = true }
 ]
 # Variable bindings. These are arbitrary, plaintext strings (similar to environment variables)
 # Note: Use secrets to store sensitive data.
@@ -13,7 +13,7 @@ routes = [
 COLD_MISS_PROB=0
 # The probability that a hit should be treated as a miss because the item was evicted from the cache
 CAP_MISS_PROB=0
-DO_CONSISTENCY_CHECK=true
+DO_CONSISTENCY_CHECK=false
 DEBUGPRINT=true
 # Bind a KV Namespace. Use KV as persistent storage for small key-value pairs.
 # Docs: https://developers.cloudflare.com/workers/runtime-apis/kv

@@ -15,7 +15,7 @@ class TicketBenchmark:
     self.backup_url = backup_url
     # consistency check url
     self.consistency_check_url = consistency_check_url
-  
+
   # populate the cache with n tickets
   def populate_tickets(self, n) -> None:
     url = self.target + "/populate_tickets"
@@ -32,7 +32,7 @@ class TicketBenchmark:
   # list all available tickets
   def avail_tickets(self) -> None:
     resp = self.session.get(target)
-    if resp.status_code == 200: 
+    if resp.status_code == 200:
       print(resp.content)
     else:
       print("avail_tickets error", resp.status_code)
@@ -50,8 +50,8 @@ class TicketBenchmark:
       "id": i,
       "taken": True,
       "res_email": f"test_{i}@test.com",
-      "res_name": f"Test Name{i}", 
-      "res_card": f"{i}xxxx1234", 
+      "res_name": f"Test Name{i}",
+      "res_card": f"{i}xxxx1234",
     }
 
     reqData = {
@@ -67,7 +67,7 @@ class TicketBenchmark:
     if resp.status_code != 200:
       print(f"ERROR: reserve_ticket({i})", resp)
     else:
-      print(resp.text)
+      print(resp.text, "in", (end-start)*1000)
 
     # milliseconds
     return (end - start) * 1000
@@ -87,7 +87,7 @@ if __name__ == "__main__":
       target = "http://localhost:8787"
       env_name = "local"
   else:
-      target = "https://ticket-bench-orch.radical-serverless.com"
+      target = "https://ticket-bench-orch.sns-radical.com"
       env_name = "edge"
 
   n = 10
@@ -99,7 +99,7 @@ if __name__ == "__main__":
   results = pd.DataFrame(columns=[f"ticket{i}_ms" for i in range(n)])
 
   ticket_bench = TicketBenchmark(target, lambda_url, consistency_check_url)
-  
+
   print("initializing dynamo")
   dynamo_setup.run_scenario(n)
   time.sleep(1)
@@ -114,10 +114,10 @@ if __name__ == "__main__":
     for i in range(n):
       print(f"ticket-{i}")
       trial_results.append(ticket_bench.reserve_ticket(i))
-    
+
     results.loc[len(results)] = trial_results
 
     ticket_bench.clear_cache()
     time.sleep(1)
-  
+
   results.to_csv(f"anti_fraud_{env_name}_{n}tickets_{trials}trials.csv")
