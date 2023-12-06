@@ -39,8 +39,8 @@ class LambdaBaseline:
 if __name__ == "__main__":
   target = "https://c54mpf4fcxguxzvatjfjocaabu0kgsuz.lambda-url.us-east-2.on.aws/"
 
-  n = 3
-  trials = 2
+  n = 10
+  trials = 10
 
   results = pd.DataFrame(columns=[f"ticket{i}_ms" for i in range(n)])
 

@@ -94,7 +94,7 @@ if __name__ == "__main__":
   trials = 10
 
   consistency_check_url = "https://nuamf2bgzlrfj6vubqfzkjv52m0kpefu.lambda-url.us-east-2.on.aws/"
-  lambda_url = "https://67f42q3sp4gqm7rfgvjngamyra0wrsew.lambda-url.us-east-2.on.aws/"
+  lambda_url = "https://c54mpf4fcxguxzvatjfjocaabu0kgsuz.lambda-url.us-east-2.on.aws/"
 
   results = pd.DataFrame(columns=[f"ticket{i}_ms" for i in range(n)])
 
