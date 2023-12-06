@@ -160,7 +160,11 @@ async function target_rw_set(args) {
 async function target_function(args) {
 	let { id, taken, res_email, res_name, res_card } = args;
 
+	let funcStart = performance.now();
 	let b = await reserve_ticket(id, res_email, res_name, res_card);
+	let funcEnd = performance.now();
+
+	logger('function runtime', funcEnd - funcStart);
 
 	return b;
 }
