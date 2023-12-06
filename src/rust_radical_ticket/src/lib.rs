@@ -161,8 +161,8 @@ pub fn anti_fraud(_ticket_id: u32, res_email: String, res_name: String, res_card
     }
 
     feature_norm = 0.0;
-    for i in 0..feature_str.len() {
-        feature_norm += (feature_str[i] as f32).powi(2);
+    for i in 0..feature_vec.len() {
+        feature_norm += feature_vec[i].powi(2);
     }
     feature_norm > 0
 }
