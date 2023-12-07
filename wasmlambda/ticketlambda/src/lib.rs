@@ -1,13 +1,13 @@
+use std::vec;
 use rand::Rng;
-use wasm_bindgen::prelude::*;
 use regex::Regex;
 use rand_distr::{Normal, Distribution};
+use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 extern "C" {
 		#[wasm_bindgen(js_namespace = console)]
 		fn log(s: &str);
-		fn get_random() -> f32;
 }
 
 macro_rules! console_log {
@@ -23,8 +23,8 @@ fn multiply_random_normal(input_vec: Vec<f32>, output_dim: usize, scale: f32) ->
     let mut normal_matrix = vec![vec![0f32; input_vec.len()]; output_dim];
     for i in 0..normal_matrix.len() {
         for j in 0..normal_matrix[i].len() {
+            // normal_matrix[i][j] = normal.sample(&mut rand::thread_rng());
             normal_matrix[i][j] = rand::thread_rng().gen_range(0.0..scale);
-            // normal_matrix[i][j] = 10.0;
         }
     }
 
@@ -47,31 +47,31 @@ fn relu(input_vec: Vec<f32>) -> Vec<f32> {
             output[i] = input_vec[i];
         }
     }
+
     output
 }
 
 // check if ticket reservation passes anti fraud test
 // true means reservation is ok, false means not
 #[wasm_bindgen]
-pub fn anti_fraud(res_email: Option<String>, res_name: Option<String>, res_card: Option<String>) -> bool {
+pub fn anti_fraud(_ticket_id: u32, res_email: String, res_name: String, res_card: String) -> bool {
     // valid email must have some valid characters before @, some after, a dot, then some more
+		console_log!("Done with email regex check");
     const EMAIL_REGEX: &str = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)";
     let re = Regex::new(EMAIL_REGEX).unwrap();
 
-		console_log!("Top of rust anti fraud call");
-    if !re.is_match(&res_email.clone().unwrap()) {
-				console_log!("No match on email regex");
+    if !re.is_match(&res_email.clone()) {
         return false;
     }
+		console_log!("Done with email regex check");
 
     // check "ml" model
     // create a feature vector from the name, email, and card
     let feature_str = [
-        res_name.clone().unwrap().as_bytes(),
-        res_email.clone().unwrap().as_bytes(),
-        res_card.clone().unwrap().as_bytes(),
+        res_name.clone().as_bytes(),
+        res_email.clone().as_bytes(),
+        res_card.clone().as_bytes(),
     ].concat();
-		console_log!("Created feature_str in rust");
     // feature vector is normalized
     let mut feature_vec = vec![0f32; feature_str.len()];
     let mut feature_norm = 0.0;
@@ -82,7 +82,6 @@ pub fn anti_fraud(res_email: Option<String>, res_name: Option<String>, res_card:
         feature_vec[i] = (feature_str[i] as f32) / (feature_norm.sqrt());
     }
 
-		console_log!("Doing the chunky stuff in rust");
     let model_depth = 256;
     for i in 0..model_depth {
         feature_vec = multiply_random_normal(feature_vec, 128, ((i % 64)+1) as f32);
@@ -92,15 +91,7 @@ pub fn anti_fraud(res_email: Option<String>, res_name: Option<String>, res_card:
     feature_norm = 0.0;
     for i in 0..feature_vec.len() {
         feature_norm += feature_vec[i].powi(2);
+        feature_norm += 1.0;
     }
     feature_norm > 0.0
-}
-
-#[wasm_bindgen]
-pub fn reserve_ticket() {
-}
-
-#[wasm_bindgen]
-pub fn greet() {
-	console_log!("Hello {}!", "world");
 }

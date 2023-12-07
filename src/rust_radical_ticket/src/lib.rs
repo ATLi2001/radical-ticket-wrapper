@@ -3,6 +3,7 @@
 // use cache::CacheKV;
 
 use std::vec;
+use rand::Rng;
 use worker::*;
 use serde::{Serialize, Deserialize};
 use regex::Regex;
@@ -30,16 +31,16 @@ pub struct Item {
 
 // type RWSet = Vec<String>;
 
-// // create new tickets 
+// // create new tickets
 // // expected request body with number
 // #[wasm_bindgen]
 // pub async fn populate_tickets(n: u32) {
 //     let cache = CacheKV::new().await;
 
-//     // create n tickets 
+//     // create n tickets
 //     for i in 0..n {
 //         let key = format!("ticket-{i}");
-//         let ticket = Ticket { 
+//         let ticket = Ticket {
 //             id: i,
 //             taken: false,
 //             res_email: None,
@@ -55,9 +56,9 @@ pub struct Item {
 
 //         cache.put(&key, &val).await.unwrap();
 //     }
-    
+
 //     // save in cache so we can know how much to clear later
-    
+
 //     cache.put("count", &n).await.unwrap();
 // }
 
@@ -79,7 +80,7 @@ pub struct Item {
 // // return a specific ticket
 // #[wasm_bindgen]
 // pub async fn get_ticket(ticket_id: u32) -> Option<JsValue> {
-    
+
 //     let cache = CacheKV::new().await;
 //     match cache.get::<Item>(&format!("ticket-{ticket_id}")).await.unwrap() {
 //         Some(val) => {
@@ -90,7 +91,6 @@ pub struct Item {
 //         }
 //     }
 // }
-
 // multiply an input vector by a random normal matrix, returning an output vector
 fn multiply_random_normal(input_vec: Vec<f32>, output_dim: usize, scale: f32) -> Vec<f32> {
     let normal = Normal::new(0.0, scale).unwrap();
@@ -98,7 +98,8 @@ fn multiply_random_normal(input_vec: Vec<f32>, output_dim: usize, scale: f32) ->
     let mut normal_matrix = vec![vec![0f32; input_vec.len()]; output_dim];
     for i in 0..normal_matrix.len() {
         for j in 0..normal_matrix[i].len() {
-            normal_matrix[i][j] = normal.sample(&mut rand::thread_rng());
+            // normal_matrix[i][j] = normal.sample(&mut rand::thread_rng());
+            normal_matrix[i][j] = rand::thread_rng().gen_range(0.0..scale);
         }
     }
 
@@ -140,8 +141,8 @@ pub fn anti_fraud(_ticket_id: u32, res_email: String, res_name: String, res_card
     // check "ml" model
     // create a feature vector from the name, email, and card
     let feature_str = [
-        res_name.clone().as_bytes(), 
-        res_email.clone().as_bytes(), 
+        res_name.clone().as_bytes(),
+        res_email.clone().as_bytes(),
         res_card.clone().as_bytes(),
     ].concat();
     // feature vector is normalized
@@ -154,7 +155,7 @@ pub fn anti_fraud(_ticket_id: u32, res_email: String, res_name: String, res_card
         feature_vec[i] = (feature_str[i] as f32) / (feature_norm.sqrt());
     }
 
-    let model_depth = 256;
+    let model_depth = 2048;
     for i in 0..model_depth {
         feature_vec = multiply_random_normal(feature_vec, 128, ((i % 64)+1) as f32);
         feature_vec = relu(feature_vec);
@@ -180,14 +181,14 @@ pub fn anti_fraud(_ticket_id: u32, res_email: String, res_name: String, res_card
 //     if resp.is_none() {
 //         return false;
 //     }
-    
+
 //     let old_val = resp.unwrap();
 //     let new_version = old_val.version + 1;
 //     // check that the ticket is not already taken
 //     if old_val.value.taken {
 //         return false;
 //     }
-    
+
 //     // create new ticket that is taken while checking reservation details are given
 //     let new_ticket = Ticket {
 //         id: ticket_id,

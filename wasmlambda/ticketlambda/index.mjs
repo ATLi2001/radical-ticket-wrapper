@@ -1,7 +1,16 @@
-import { greet, anti_fraud } from './pkg/ticketlambda.js';
+import { anti_fraud } from './pkg/ticketlambda.js';
 import { DynamoDB } from "@aws-sdk/client-dynamodb"
 import { DynamoDBDocumentClient, GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb"
 import { performance, PerformanceObserver } from "perf_hooks"
+import { readFileSync } from 'fs'
+
+// console.log(pkg)
+const perfObserver = new PerformanceObserver((items) => {
+  items.getEntries().forEach((entry) => {
+    console.log(entry)
+  })
+})
+perfObserver.observe({ entryTypes: ["measure"], buffer: true })
 
 const getKey = async (docClient, key) => {
   const command = new GetCommand({
@@ -51,7 +60,10 @@ export const handler = async(event, ctx) => {
 
 	// Do the anti fraud stuff
 	let antiFraudCheck = true
-	antiFraudCheck = anti_fraud(res_email, res_name, res_card)
+	performance.mark("start-inv")
+	antiFraudCheck = anti_fraud(0, res_email, res_name, res_card)
+	performance.mark("end-inv")
+	performance.measure("invoke-time", "start-inv", "end-inv")
 	console.log("Result of calling anti fraud", antiFraudCheck)
 	if (antiFraudCheck) {
 		console.log("Updating item to version", item.Version + 1)
@@ -71,7 +83,6 @@ export const handler = async(event, ctx) => {
 		// console.log(resp)
 	}
 
-	greet("hello")
 	let respBody = { done: true }
 	return {
 		statusCode: 200,
@@ -79,13 +90,6 @@ export const handler = async(event, ctx) => {
 	}
 }
 
-const perfObserver = new PerformanceObserver((items) => {
-  items.getEntries().forEach((entry) => {
-    console.log(entry)
-  })
-})
-
-perfObserver.observe({ entryTypes: ["measure"], buffer: true })
 
 for (let i = 0; i < 1; i++) {
 	performance.mark("start-req")

@@ -163,19 +163,22 @@ async function target_function(args) {
 	// get old ticket
 	let key = `ticket-${id}`;
 	let cacheValue = await cache.match(keyToCacheKey(key))
-	// not there 
+	// not there
 	if (cacheValue == undefined) {
-		return false;
+		// Return something for the purposes of benchmarking
+		return false
 	}
+	console.log("CacheValue not undefined", cacheValue)
 	// extract info
 	let val_json = await cacheValue.json();
+	console.log("Value of cacheValue", val_json)
 	let old_val = val_json["value"];
 	let old_version = old_val["Version"];
 	let new_version = old_version + 1;
 	let old_ticket = old_val["Value"];
-	if (old_ticket["taken"]) {
-		return false;
-	}
+	// if (old_ticket["taken"]) {
+	// 	return false;
+	// }
 
 	let new_ticket = {
 		"id": id,
@@ -240,7 +243,7 @@ async function clear_cache() {
 }
 
 async function get_ticket(i) {
-	let cacheValue =  await cache.match(keyToCacheKey(`ticket-${i}`));	
+	let cacheValue =  await cache.match(keyToCacheKey(`ticket-${i}`));
 	if (cacheValue != undefined) {
 		return await cacheValue.json();
 	}
@@ -262,7 +265,19 @@ export default {
 			let resp = await get_ticket(0);
 			logger(resp);
 			return new Response('ticket 0');
-		} 
+		} else if (url.pathname === '/direct_invoke') {
+			console.log("Just running the function")
+			let args_to_func = {
+				id: 0,
+				res_name: 'Test Name0',
+				res_email: 'test_0@test.com',
+				res_card: '0xxxx1234',
+				taken: true
+			}
+			let res = await target_function(args_to_func);
+			console.log("Result of direct invocation", res);
+			return new Response(res)
+		}
 		else {
 			if (!environment.DEBUGPRINT) {
 				logger = function () {};
